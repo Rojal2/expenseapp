@@ -4,9 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'models/expense.dart';
 import 'dart:collection';
+import 'package:provider/provider.dart';
+import 'theme_provider.dart';
 
 class AnalyticsScreen extends StatelessWidget {
-  const AnalyticsScreen({Key? key}) : super(key: key);
+  const AnalyticsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +21,18 @@ class AnalyticsScreen extends StatelessWidget {
         title: const Text('Analytics'),
         actions: [
           IconButton(
+            icon: Icon(
+              Provider.of<ThemeProvider>(context).themeMode == ThemeMode.dark
+                  ? Icons.wb_sunny
+                  : Icons.nightlight_round,
+            ),
+            tooltip: 'Toggle Theme',
+            onPressed: () => Provider.of<ThemeProvider>(
+              context,
+              listen: false,
+            ).toggleTheme(),
+          ),
+          IconButton(
             icon: const Icon(Icons.account_circle),
             tooltip: 'Profile/Settings',
             onPressed: () {
@@ -26,7 +40,7 @@ class AnalyticsScreen extends StatelessWidget {
                 context: context,
                 builder: (ctx) => AlertDialog(
                   title: const Text('Profile'),
-                  content: Text('Email: ${user?.email ?? "-"}'),
+                  content: Text('Email: ${user.email ?? "-"}'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
@@ -237,8 +251,9 @@ class AnalyticsScreen extends StatelessWidget {
                             showTitles: true,
                             getTitlesWidget: (value, meta) {
                               final idx = value.toInt();
-                              if (idx < 0 || idx >= dayTotals.keys.length)
+                              if (idx < 0 || idx >= dayTotals.keys.length) {
                                 return const SizedBox();
+                              }
                               return Text(dayTotals.keys.elementAt(idx));
                             },
                           ),
@@ -297,8 +312,9 @@ class AnalyticsScreen extends StatelessWidget {
                             showTitles: true,
                             getTitlesWidget: (value, meta) {
                               final idx = value.toInt();
-                              if (idx < 0 || idx >= lineTotals.keys.length)
+                              if (idx < 0 || idx >= lineTotals.keys.length) {
                                 return const SizedBox();
+                              }
                               return Text(
                                 lineTotals.keys.elementAt(idx),
                                 style: const TextStyle(fontSize: 10),
