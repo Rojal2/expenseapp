@@ -337,3 +337,58 @@ class _AuthScreenState extends State<AuthScreen>
     );
   }
 }
+
+class IncomeEntry {
+  final String id;
+  final double amount;
+  final DateTime date;
+  final String? description;
+
+  IncomeEntry({
+    required this.id,
+    required this.amount,
+    required this.date,
+    this.description,
+  });
+
+  Map<String, dynamic> toMap() => {
+    'amount': amount,
+    'date': date.toIso8601String(),
+    'description': description,
+  };
+
+  factory IncomeEntry.fromMap(String id, Map<String, dynamic> map) {
+    return IncomeEntry(
+      id: id,
+      amount: (map['amount'] as num).toDouble(),
+      date: DateTime.parse(map['date']),
+      description: map['description'],
+    );
+  }
+}
+
+class Budget {
+  final String year;
+  final Map<String, double> monthlyBudgets;
+  final double yearlyBudget;
+
+  Budget({
+    required this.year,
+    required this.monthlyBudgets,
+    required this.yearlyBudget,
+  });
+
+  Map<String, dynamic> toMap() => {
+    'monthlyBudgets': monthlyBudgets,
+    'yearlyBudget': yearlyBudget,
+  };
+
+  factory Budget.fromMap(String year, Map<String, dynamic> map) {
+    final monthly = Map<String, double>.from(map['monthlyBudgets'] ?? {});
+    return Budget(
+      year: year,
+      monthlyBudgets: monthly,
+      yearlyBudget: (map['yearlyBudget'] as num).toDouble(),
+    );
+  }
+}

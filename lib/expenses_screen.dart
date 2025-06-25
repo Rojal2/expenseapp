@@ -5,6 +5,7 @@ import 'models/expense.dart';
 import 'analytics_screen.dart';
 import 'package:provider/provider.dart';
 import 'theme_provider.dart';
+import 'budget_income_screen.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -217,6 +218,15 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               }
             },
             tooltip: 'Sign Out',
+          ),
+          IconButton(
+            icon: const Icon(Icons.account_balance),
+            tooltip: 'Budget & Income',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const BudgetIncomeScreen()),
+              );
+            },
           ),
         ],
       ),
