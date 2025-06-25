@@ -58,15 +58,25 @@ class _AuthScreenState extends State<AuthScreen>
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
+        setState(() {
+          _isLogin = true;
+          _passwordController.clear();
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Account created! Please sign in.')),
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
         _error = e.message;
       });
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error: ${e.message}')));
+      }
     } finally {
       setState(() {
         _loading = false;
@@ -98,10 +108,11 @@ class _AuthScreenState extends State<AuthScreen>
       setState(() {
         _error = e.message;
       });
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error: ${e.message}')));
+      }
     } finally {
       setState(() {
         _loading = false;
@@ -137,15 +148,17 @@ class _AuthScreenState extends State<AuthScreen>
     if (email != null && email.isNotEmpty) {
       try {
         await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Password reset email sent!')),
           );
+        }
       } catch (e) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        }
       }
     }
   }
@@ -168,141 +181,148 @@ class _AuthScreenState extends State<AuthScreen>
           body: Center(
             child: FadeTransition(
               opacity: _fadeAnim,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.account_balance_wallet_rounded,
-                      size: 64,
-                      color: Colors.deepPurple,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      _isLogin ? 'Welcome Back!' : 'Create an Account',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple[700],
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.account_balance_wallet_rounded,
+                        size: 64,
+                        color: Colors.deepPurple,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _isLogin
-                          ? 'Sign in to continue to ExpenseApp'
-                          : 'Register to start tracking your expenses',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    Card(
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            TextField(
-                              controller: _emailController,
-                              decoration: const InputDecoration(
-                                labelText: 'Email',
-                                prefixIcon: Icon(Icons.email_rounded),
-                              ),
-                              keyboardType: TextInputType.emailAddress,
-                            ),
-                            const SizedBox(height: 16),
-                            TextField(
-                              controller: _passwordController,
-                              decoration: InputDecoration(
-                                labelText: 'Password',
-                                prefixIcon: const Icon(Icons.lock_rounded),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                  ),
-                                  onPressed: () => setState(
-                                    () => _obscurePassword = !_obscurePassword,
-                                  ),
-                                ),
-                              ),
-                              obscureText: _obscurePassword,
-                            ),
-                            const SizedBox(height: 8),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: _loading ? null : _forgotPassword,
-                                child: const Text('Forgot password?'),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: _loading ? null : _submit,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.deepPurple,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                child: Text(_isLogin ? 'Sign In' : 'Register'),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: _loading
-                                  ? null
-                                  : () {
-                                      setState(() => _isLogin = !_isLogin);
-                                      _animController.reset();
-                                      _animController.forward();
-                                    },
-                              child: Text(
-                                _isLogin
-                                    ? 'Create an account'
-                                    : 'Already have an account? Sign In',
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            const Divider(),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                icon: const Icon(Icons.login),
-                                label: const Text('Sign in with Google'),
-                                onPressed: _loading ? null : _signInWithGoogle,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.black87,
-                                  side: const BorderSide(
-                                    color: Colors.deepPurple,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                      const SizedBox(height: 12),
+                      Text(
+                        _isLogin ? 'Welcome Back!' : 'Create an Account',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple[700],
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        _isLogin
+                            ? 'Sign in to continue to ExpenseApp'
+                            : 'Register to start tracking your expenses',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextField(
+                                controller: _emailController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Email',
+                                  prefixIcon: Icon(Icons.email_rounded),
+                                ),
+                                keyboardType: TextInputType.emailAddress,
+                              ),
+                              const SizedBox(height: 16),
+                              TextField(
+                                controller: _passwordController,
+                                decoration: InputDecoration(
+                                  labelText: 'Password',
+                                  prefixIcon: const Icon(Icons.lock_rounded),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscurePassword
+                                          ? Icons.visibility_off
+                                          : Icons.visibility,
+                                    ),
+                                    onPressed: () => setState(
+                                      () =>
+                                          _obscurePassword = !_obscurePassword,
+                                    ),
+                                  ),
+                                ),
+                                obscureText: _obscurePassword,
+                              ),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: _loading ? null : _forgotPassword,
+                                  child: const Text('Forgot password?'),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: _loading ? null : _submit,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.deepPurple,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _isLogin ? 'Sign In' : 'Register',
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: _loading
+                                    ? null
+                                    : () {
+                                        setState(() => _isLogin = !_isLogin);
+                                        _animController.reset();
+                                        _animController.forward();
+                                      },
+                                child: Text(
+                                  _isLogin
+                                      ? 'Create an account'
+                                      : 'Already have an account? Sign In',
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              const Divider(),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  icon: const Icon(Icons.login),
+                                  label: const Text('Sign in with Google'),
+                                  onPressed: _loading
+                                      ? null
+                                      : _signInWithGoogle,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: Colors.black87,
+                                    side: const BorderSide(
+                                      color: Colors.deepPurple,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
