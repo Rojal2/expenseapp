@@ -3,9 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'models/expense.dart';
 import 'analytics_screen.dart';
+import 'package:provider/provider.dart';
+import 'theme_provider.dart';
 
 class ExpensesScreen extends StatefulWidget {
-  const ExpensesScreen({Key? key}) : super(key: key);
+  const ExpensesScreen({super.key});
 
   @override
   State<ExpensesScreen> createState() => _ExpensesScreenState();
@@ -54,26 +56,29 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           .collection('expenses');
       if (_editingId == null) {
         await ref.add(data);
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text('Expense added!')));
+        }
       } else {
         await ref.doc(_editingId).update(data);
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text('Expense updated!')));
+        }
       }
       _clearForm();
     } catch (e) {
       setState(() {
         _error = e.toString();
       });
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     } finally {
       setState(() {
         _loading = false;
@@ -110,10 +115,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         .collection('expenses')
         .doc(id)
         .delete();
-    if (mounted)
+    if (mounted) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Expense deleted!')));
+    }
   }
 
   @override
@@ -123,6 +129,18 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       appBar: AppBar(
         title: const Text('Expenses'),
         actions: [
+          IconButton(
+            icon: Icon(
+              Provider.of<ThemeProvider>(context).themeMode == ThemeMode.dark
+                  ? Icons.wb_sunny
+                  : Icons.nightlight_round,
+            ),
+            tooltip: 'Toggle Theme',
+            onPressed: () => Provider.of<ThemeProvider>(
+              context,
+              listen: false,
+            ).toggleTheme(),
+          ),
           IconButton(
             icon: const Icon(Icons.analytics),
             tooltip: 'Analytics',
@@ -273,8 +291,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                     firstDate: DateTime(2000),
                                     lastDate: DateTime(2100),
                                   );
-                                  if (picked != null)
+                                  if (picked != null) {
                                     setState(() => _selectedDate = picked);
+                                  }
                                 },
                                 child: Text(
                                   '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}',
