@@ -110,7 +110,7 @@ class AnalyticsScreen extends StatelessWidget {
               .toList();
 
           // Summary calculations
-          final totalSpent = expenses.fold(0.0, (sum, e) => sum + e.amount);
+          final totalSpent = expenses.fold(0.0, (total, e) => total + e.amount);
           final categoryCounts = <String, int>{};
           for (var e in expenses) {
             categoryCounts[e.category] = (categoryCounts[e.category] ?? 0) + 1;
@@ -371,7 +371,7 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: color.withOpacity(0.1),
+      color: color.withAlpha(26),
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(

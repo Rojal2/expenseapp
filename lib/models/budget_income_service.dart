@@ -50,12 +50,12 @@ class BudgetIncomeService {
 
   // Budget methods
   Future<void> setBudget(Budget budget) async {
-    await _firestore
+    final docRef = _firestore
         .collection('users')
         .doc(_uid)
         .collection('budgets')
-        .doc(budget.year)
-        .set(budget.toMap());
+        .doc(budget.year.toString());
+    await docRef.set(budget.toMap());
   }
 
   Future<Budget?> fetchBudget(String year) async {

@@ -14,7 +14,7 @@ class _AuthScreenState extends State<AuthScreen>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLogin = true;
-  String? _error;
+
   bool _loading = false;
   bool _obscurePassword = true;
   late AnimationController _animController;
@@ -45,7 +45,6 @@ class _AuthScreenState extends State<AuthScreen>
   Future<void> _submit() async {
     setState(() {
       _loading = true;
-      _error = null;
     });
     try {
       if (_isLogin) {
@@ -69,9 +68,7 @@ class _AuthScreenState extends State<AuthScreen>
         }
       }
     } on FirebaseAuthException catch (e) {
-      setState(() {
-        _error = e.message;
-      });
+      setState(() {});
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -87,7 +84,6 @@ class _AuthScreenState extends State<AuthScreen>
   Future<void> _signInWithGoogle() async {
     setState(() {
       _loading = true;
-      _error = null;
     });
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
@@ -105,9 +101,7 @@ class _AuthScreenState extends State<AuthScreen>
       );
       await FirebaseAuth.instance.signInWithCredential(credential);
     } on FirebaseAuthException catch (e) {
-      setState(() {
-        _error = e.message;
-      });
+      setState(() {});
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -330,7 +324,7 @@ class _AuthScreenState extends State<AuthScreen>
         ),
         if (_loading)
           Container(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             child: const Center(child: CircularProgressIndicator()),
           ),
       ],

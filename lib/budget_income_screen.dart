@@ -6,9 +6,10 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:logger/logger.dart';
 
 class BudgetIncomeScreen extends StatefulWidget {
-  const BudgetIncomeScreen({Key? key}) : super(key: key);
+  const BudgetIncomeScreen({super.key});
 
   @override
   State<BudgetIncomeScreen> createState() => _BudgetIncomeScreenState();
@@ -25,6 +26,7 @@ class _BudgetIncomeScreenState extends State<BudgetIncomeScreen> {
   final _budgetController = TextEditingController();
   Budget? _budget;
   int _avgMonths = 6;
+  final logger = Logger();
   final List<int> _monthOptions = [3, 6, 12];
   final List<String> _months = const [
     'Jan',
@@ -40,7 +42,7 @@ class _BudgetIncomeScreenState extends State<BudgetIncomeScreen> {
     'Nov',
     'Dec',
   ];
-  Map<String, TextEditingController> _monthlyControllers = {};
+  final Map<String, TextEditingController> _monthlyControllers = {};
   IncomeEntry? _editingIncome;
   Map<String, double> _monthlyExpenses = {};
 
@@ -74,7 +76,7 @@ class _BudgetIncomeScreenState extends State<BudgetIncomeScreen> {
       setState(() {
         _incomeEntries = entries;
       });
-      print('Fetched income entries: $_incomeEntries');
+      logger.i('Fetched income entries: $_incomeEntries');
     } catch (e) {
       _showSnackbar('Failed to fetch income: $e', color: Colors.red);
     } finally {
@@ -126,9 +128,9 @@ class _BudgetIncomeScreenState extends State<BudgetIncomeScreen> {
             .where('date', isGreaterThanOrEqualTo: monthStart.toIso8601String())
             .where('date', isLessThan: monthEnd.toIso8601String())
             .get();
-        final total = query.docs.fold(0.0, (sum, doc) {
+        final total = query.docs.fold(0.0, (acc, doc) {
           final data = doc.data();
-          return sum + (data['amount'] as num).toDouble();
+          return acc + (data['amount'] as num).toDouble();
         });
         monthlyTotals[i.toString().padLeft(2, '0')] = total;
       }
@@ -153,17 +155,17 @@ class _BudgetIncomeScreenState extends State<BudgetIncomeScreen> {
     if (_editingIncome == null) {
       final entry = IncomeEntry(
         id: '',
-        amount: double.tryParse(_incomeAmountController.text) ?? 0,
+        amount: double.tryParse(_incomeAmountController.text) ?? 0.0,
         date: _incomeDate,
         description: _incomeDescController.text,
       );
-      print('Adding income: ${entry.toMap()}');
+      logger.w('Adding income: ${entry.toMap()}');
       await _service.addIncome(entry);
       _showSnackbar('Income added!', color: Colors.green);
     } else {
       final entry = IncomeEntry(
         id: _editingIncome!.id,
-        amount: double.tryParse(_incomeAmountController.text) ?? 0,
+        amount: double.tryParse(_incomeAmountController.text) ?? 0.0,
         date: _incomeDate,
         description: _incomeDescController.text,
       );
@@ -218,7 +220,7 @@ class _BudgetIncomeScreenState extends State<BudgetIncomeScreen> {
   Future<void> _setBudget() async {
     if (_budgetYear == null || _budgetController.text.isEmpty) return;
     final budget = Budget(
-      year: _budgetYear!,
+      year: int.parse(_budgetYear!),
       monthlyBudgets: {},
       yearlyBudget: double.tryParse(_budgetController.text) ?? 0,
     );
@@ -236,7 +238,7 @@ class _BudgetIncomeScreenState extends State<BudgetIncomeScreen> {
       if (val != null) monthly[key] = val;
     }
     final budget = Budget(
-      year: _budgetYear!,
+      year: int.parse(_budgetYear!),
       monthlyBudgets: monthly,
       yearlyBudget: _budget?.yearlyBudget ?? 0,
     );
@@ -253,7 +255,7 @@ class _BudgetIncomeScreenState extends State<BudgetIncomeScreen> {
         .where((e) => e.date.isAfter(cutoff))
         .toList();
     if (filtered.isEmpty) return 0;
-    final total = filtered.fold(0.0, (sum, e) => sum + e.amount);
+    final total = filtered.fold(0.0, (totalSoFar, e) => totalSoFar + e.amount);
     return total / _avgMonths;
   }
 
@@ -320,7 +322,7 @@ class _BudgetIncomeScreenState extends State<BudgetIncomeScreen> {
                               children: [
                                 Icon(
                                   Icons.attach_money,
-                                  color: Colors.green[700],
+                                  color: Colors.blue[700],
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
@@ -377,8 +379,9 @@ class _BudgetIncomeScreenState extends State<BudgetIncomeScreen> {
                                       firstDate: DateTime(2000),
                                       lastDate: DateTime(2100),
                                     );
-                                    if (picked != null)
+                                    if (picked != null) {
                                       setState(() => _incomeDate = picked);
+                                    }
                                   },
                                 ),
                                 AnimatedSwitcher(
@@ -712,7 +715,9 @@ class _BudgetIncomeScreenState extends State<BudgetIncomeScreen> {
                                           )
                                         : null,
                                     color: isCurrentMonth
-                                        ? Colors.deepPurple.withOpacity(0.1)
+                                        ? Colors.deepPurple.withValues(
+                                            alpha: 0.1,
+                                          )
                                         : null,
                                     border: Border.all(
                                       color: isCurrentMonth
@@ -724,8 +729,8 @@ class _BudgetIncomeScreenState extends State<BudgetIncomeScreen> {
                                     boxShadow: [
                                       if (isCurrentMonth)
                                         BoxShadow(
-                                          color: Colors.deepPurple.withOpacity(
-                                            0.2,
+                                          color: Colors.deepPurple.withValues(
+                                            alpha: 0.2,
                                           ),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
@@ -829,8 +834,9 @@ class _BudgetIncomeScreenState extends State<BudgetIncomeScreen> {
                                           showTitles: true,
                                           getTitlesWidget: (value, meta) {
                                             final idx = value.toInt();
-                                            if (idx < 0 || idx > 11)
+                                            if (idx < 0 || idx > 11) {
                                               return const SizedBox();
+                                            }
                                             return Padding(
                                               padding: const EdgeInsets.only(
                                                 top: 4,
@@ -867,7 +873,7 @@ class _BudgetIncomeScreenState extends State<BudgetIncomeScreen> {
                                           .where((e) => e.date.month == i + 1)
                                           .fold(
                                             0.0,
-                                            (sum, e) => sum + e.amount,
+                                            (total, e) => total + e.amount,
                                           );
                                       final budget =
                                           _budget?.monthlyBudgets[key] ?? 0;
@@ -958,8 +964,9 @@ class _BudgetIncomeScreenState extends State<BudgetIncomeScreen> {
                                       )
                                       .toList(),
                                   onChanged: (val) {
-                                    if (val != null)
+                                    if (val != null) {
                                       setState(() => _avgMonths = val);
+                                    }
                                   },
                                 ),
                               ],

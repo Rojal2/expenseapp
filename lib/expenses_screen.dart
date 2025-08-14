@@ -19,6 +19,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   final _noteController = TextEditingController();
   String _category = 'Food';
   DateTime _selectedDate = DateTime.now();
+
   final List<String> _categories = [
     'All',
     'Food',
@@ -30,7 +31,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         'Other',
   ];
   bool _loading = false;
-  String? _error;
   String _search = '';
   String _filterCategory = 'All';
   String? _editingId;
@@ -38,7 +38,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   Future<void> _addOrUpdateExpense() async {
     setState(() {
       _loading = true;
-      _error = null;
     });
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -72,9 +71,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       }
       _clearForm();
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-      });
+      setState(() {});
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -438,7 +435,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       }
                       double total = expenses.fold(
                         0,
-                        (sum, e) => sum + e.amount,
+                        (currentTotal, e) => currentTotal + e.amount,
                       );
                       return Column(
                         children: [
