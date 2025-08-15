@@ -1044,10 +1044,14 @@ class _BudgetIncomeScreenState extends State<BudgetIncomeScreen> {
                               children: [
                                 Icon(Icons.lightbulb, color: Colors.teal),
                                 const SizedBox(width: 8),
-                                Text(
-                                  'Average Income & Suggested Budget',
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                Expanded(
+                                  child: Text(
+                                    'Average Income & Suggested Budget',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
                                 ),
                               ],
                             ),
