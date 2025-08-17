@@ -1,8 +1,29 @@
 import 'package:flutter/material.dart';
-import '../expenses_screen.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import '../screens/expenses_screen.dart';
+import '../screens/notification_screen.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+    // Subscribe to 'allUsers' topic
+    FirebaseMessaging.instance
+        .subscribeToTopic('allUsers')
+        .then((_) {
+          print('Subscribed to allUsers topic');
+        })
+        .catchError((error) {
+          print('Failed to subscribe: $error');
+        });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +44,6 @@ class HomePage extends StatelessWidget {
               leading: const Icon(Icons.money),
               title: const Text("Expenses"),
               onTap: () {
-                // TODO: Navigate to Expenses Screen
                 Navigator.pop(context);
                 Navigator.push(
                   context,
@@ -37,7 +57,6 @@ class HomePage extends StatelessWidget {
               leading: const Icon(Icons.account_balance_wallet),
               title: const Text("Budget"),
               onTap: () {
-                // TODO: Navigate to Budget Screen
                 Navigator.pop(context);
               },
             ),
@@ -45,21 +64,35 @@ class HomePage extends StatelessWidget {
               leading: const Icon(Icons.bar_chart),
               title: const Text("Comparison"),
               onTap: () {
-                // TODO: Navigate to Comparison Screen
                 Navigator.pop(context);
               },
             ),
           ],
         ),
       ),
-      body: const Center(
-        child: Text(
-          "Welcome to Budget Tracker",
-          style: TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
-            color: Colors.teal,
-          ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              "Welcome to Budget Tracker",
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: Colors.teal,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationScreen()),
+                );
+              },
+              child: const Text('Send Notification'),
+            ),
+          ],
         ),
       ),
     );

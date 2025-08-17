@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'models/budget_income_service.dart';
-import 'models/income_entry.dart';
-import 'models/budget.dart';
+import '../../models/budget_income_service.dart';
+import '../../models/income_entry.dart';
+import '../../models/budget.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
