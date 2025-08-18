@@ -1,0 +1,78 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+class FinanceService {
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  Future<Map<String, Map<String, double>>> getIncomeVsExpense({
+    String period = 'month',
+  }) async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return {};
+
+    DateTime now = DateTime.now();
+    DateTime startDate;
+
+    if (period == 'week') {
+      startDate = now.subtract(
+        Duration(days: now.weekday - 1),
+      ); // start of week
+    } else {
+      startDate = DateTime(now.year, now.month, 1); // start of month
+    }
+
+    // Fetch expenses
+    QuerySnapshot expenseSnapshot = await _db
+        .collection('users')
+        .doc(user.uid)
+        .collection('expenses')
+        .get();
+
+    // Fetch income
+    QuerySnapshot incomeSnapshot = await _db
+        .collection('users')
+        .doc(user.uid)
+        .collection('income')
+        .get();
+
+    Map<String, double> expensesByDate = {};
+    for (var doc in expenseSnapshot.docs) {
+      var data = doc.data() as Map<String, dynamic>;
+
+      // Parse string date
+      final dateStr = data['date'] as String? ?? '';
+      final date = DateTime.tryParse(dateStr);
+      if (date == null || date.isBefore(startDate)) continue;
+
+      String key = "${date.day}/${date.month}";
+      double amount = (data['amount'] ?? 0).toDouble();
+      expensesByDate[key] = (expensesByDate[key] ?? 0) + amount;
+    }
+
+    Map<String, double> incomeByDate = {};
+    for (var doc in incomeSnapshot.docs) {
+      var data = doc.data() as Map<String, dynamic>;
+
+      // Parse string date
+      final dateStr = data['date'] as String? ?? '';
+      final date = DateTime.tryParse(dateStr);
+      if (date == null || date.isBefore(startDate)) continue;
+
+      String key = "${date.day}/${date.month}";
+      double amount = (data['amount'] ?? 0).toDouble();
+      incomeByDate[key] = (incomeByDate[key] ?? 0) + amount;
+    }
+
+    // Combine into a single map
+    Map<String, Map<String, double>> combined = {};
+    Set<String> allKeys = {...expensesByDate.keys, ...incomeByDate.keys};
+    for (var key in allKeys) {
+      combined[key] = {
+        'expense': expensesByDate[key] ?? 0,
+        'income': incomeByDate[key] ?? 0,
+      };
+    }
+
+    return combined;
+  }
+}

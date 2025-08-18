@@ -1,3 +1,4 @@
+import 'package:expenseapp/screens/analytics/analytics_dashboard.dart';
 import 'package:expenseapp/screens/analytics_screen.dart';
 import 'package:expenseapp/screens/budget_income_screen.dart';
 import 'package:expenseapp/screens/expenses_screen.dart';
@@ -61,7 +62,7 @@ class HomePage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const AnalyticsScreen(),
+                    builder: (context) => const AnalyticsDashboard(),
                   ),
                 );
               },
