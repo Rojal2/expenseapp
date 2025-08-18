@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
-import 'auth_screen.dart';
-import 'expenses_screen.dart';
+import 'screens/auth_screen.dart';
+
+import '../widgets/home_page.dart';
 import 'package:provider/provider.dart';
-import 'theme_provider.dart';
+import '../providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,7 +62,7 @@ class MyApp extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasData) {
-            return const ExpensesScreen();
+            return const HomePage();
           }
           return const AuthScreen();
         },
