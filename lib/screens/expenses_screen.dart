@@ -49,7 +49,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         'amount': amount,
         'category': _category,
         'note': _noteController.text.trim(),
-        'date': _selectedDate.toIso8601String(),
+        'date': Timestamp.fromDate(_selectedDate),
       };
 
       final ref = FirebaseFirestore.instance

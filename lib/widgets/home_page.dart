@@ -2,6 +2,9 @@ import 'package:expenseapp/screens/analytics/analytics_dashboard.dart';
 import 'package:expenseapp/screens/analytics_screen.dart';
 import 'package:expenseapp/screens/budget_income_screen.dart';
 import 'package:expenseapp/screens/expenses_screen.dart';
+import 'package:expenseapp/screens/list_budget.dart';
+import 'package:expenseapp/screens/list_expense.dart';
+import 'package:expenseapp/screens/list_income.dart';
 import 'package:expenseapp/screens/profile_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -36,21 +39,32 @@ class HomePage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const ExpensesScreen(),
+                    builder: (context) => const ListExpenseScreen(),
                   ),
                 );
               },
             ),
             ListTile(
               leading: const Icon(Icons.account_balance_wallet),
-              title: const Text("Budget & Income"),
+              title: const Text("Income"),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const BudgetIncomeScreen(),
+                    builder: (context) => const IncomeListScreen(),
                   ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.account_balance_wallet),
+              title: const Text("Budget"),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const BudgetScreen()),
                 );
               },
             ),

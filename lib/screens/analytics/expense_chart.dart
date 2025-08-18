@@ -92,12 +92,9 @@ class _ExpenseChartState extends State<ExpenseChart> {
           'Week $_selectedWeek: ${DateFormat('MMM dd').format(startDate)} – ${DateFormat('MMM dd').format(endDate)}';
     }
 
-    String startStr = DateFormat('yyyy-MM-dd').format(startDate);
-    String endStr = DateFormat('yyyy-MM-dd').format(endDate);
-
     Map<String, double> data = await _expenseService.getExpensesByDateRange(
-      startStr: startStr,
-      endStr: endStr,
+      startDate: startDate,
+      endDate: endDate,
     );
 
     setState(() {

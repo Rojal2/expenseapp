@@ -1,7 +1,8 @@
+import 'package:expenseapp/services/analytics_service.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../models/expense.dart';
-import '../services/analytics_service.dart';
+import '../screens/models/expense.dart';
+import '../screens/services/analytics_service.dart';
 
 class ExpenseChartWidget extends StatefulWidget {
   const ExpenseChartWidget({super.key});

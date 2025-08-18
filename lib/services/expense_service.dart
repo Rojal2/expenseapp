@@ -6,8 +6,8 @@ class ExpenseService {
 
   /// Fetch expenses by date range
   Future<Map<String, double>> getExpensesByDateRange({
-    required String startStr,
-    required String endStr,
+    required DateTime startDate,
+    required DateTime endDate,
   }) async {
     User? user = FirebaseAuth.instance.currentUser;
     if (user == null) return {};
@@ -16,8 +16,8 @@ class ExpenseService {
         .collection('users')
         .doc(user.uid)
         .collection('expenses')
-        .where('date', isGreaterThanOrEqualTo: startStr)
-        .where('date', isLessThanOrEqualTo: endStr)
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
         .get();
 
     Map<String, double> categoryTotals = {};
