@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/expense.dart';
-import 'analytics_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
-import 'budget_income_screen.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -27,9 +25,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     'Shopping',
     'Bills',
     'Entertainment',
-    'Drinks'
-        'Other',
+    'Drinks',
+    'Other',
   ];
+
   bool _loading = false;
   String _search = '';
   String _filterCategory = 'All';
@@ -42,18 +41,22 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('Not signed in');
+
       final amount = double.tryParse(_amountController.text.trim());
       if (amount == null) throw Exception('Invalid amount');
+
       final data = {
         'amount': amount,
         'category': _category,
         'note': _noteController.text.trim(),
         'date': _selectedDate.toIso8601String(),
       };
+
       final ref = FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('expenses');
+
       if (_editingId == null) {
         await ref.add(data);
         if (mounted) {
@@ -71,7 +74,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       }
       _clearForm();
     } catch (e) {
-      setState(() {});
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -107,12 +109,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   Future<void> _deleteExpense(String id) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
+
     await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
         .collection('expenses')
         .doc(id)
         .delete();
+
     if (mounted) {
       ScaffoldMessenger.of(
         context,
@@ -123,10 +127,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Expenses'),
         actions: [
+          // Only theme toggle remains
           IconButton(
             icon: Icon(
               Provider.of<ThemeProvider>(context).themeMode == ThemeMode.dark
@@ -138,92 +144,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               context,
               listen: false,
             ).toggleTheme(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.analytics),
-            tooltip: 'Analytics',
-            onPressed: () {
-              Navigator.of(context).push(
-                PageRouteBuilder(
-                  pageBuilder: (_, __, ___) => const AnalyticsScreen(),
-                  transitionsBuilder:
-                      (context, animation, secondaryAnimation, child) {
-                        return FadeTransition(opacity: animation, child: child);
-                      },
-                ),
-              );
-            },
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                PageRouteBuilder(
-                  pageBuilder: (_, __, ___) => const AnalyticsScreen(),
-                  transitionsBuilder:
-                      (context, animation, secondaryAnimation, child) {
-                        return FadeTransition(opacity: animation, child: child);
-                      },
-                ),
-              );
-            },
-            child: const Text(
-              'Analytics',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.account_circle),
-            tooltip: 'Profile/Settings',
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('Profile'),
-                  content: Text('Email: ${user?.email ?? "-"}'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Close'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('Sign Out'),
-                  content: const Text('Are you sure you want to sign out?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx, false),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text('Sign Out'),
-                    ),
-                  ],
-                ),
-              );
-              if (confirm == true) {
-                await FirebaseAuth.instance.signOut();
-              }
-            },
-            tooltip: 'Sign Out',
-          ),
-          IconButton(
-            icon: const Icon(Icons.account_balance),
-            tooltip: 'Budget & Income',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const BudgetIncomeScreen()),
-              );
-            },
           ),
         ],
       ),
@@ -317,7 +237,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                       ? null
                                       : _addOrUpdateExpense,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.deepPurple,
+                                    backgroundColor: Colors.lightBlue,
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 14,
                                     ),
@@ -409,6 +329,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           ],
                         );
                       }
+
                       var expenses = snapshot.data!.docs
                           .map(
                             (doc) => Expense.fromMap(
@@ -417,6 +338,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             ),
                           )
                           .toList();
+
                       // Filter by search
                       if (_search.isNotEmpty) {
                         expenses = expenses
@@ -427,16 +349,19 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             )
                             .toList();
                       }
+
                       // Filter by category
                       if (_filterCategory != 'All') {
                         expenses = expenses
                             .where((e) => e.category == _filterCategory)
                             .toList();
                       }
+
                       double total = expenses.fold(
                         0,
                         (currentTotal, e) => currentTotal + e.amount,
                       );
+
                       return Column(
                         children: [
                           Padding(
