@@ -1,5 +1,7 @@
 import 'package:expenseapp/models/income_entry.dart';
+import 'package:expenseapp/services/income_service.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AddIncomeScreen extends StatefulWidget {
@@ -17,6 +19,8 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
   final _descriptionController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   String _selectedType = 'regular';
+
+  final IncomeService _incomeService = IncomeService();
 
   final List<String> _months = [
     'January',
@@ -46,7 +50,6 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
       _descriptionController.text = entry.description ?? '';
       _selectedDate = entry.date;
       _selectedType = entry.type;
-
       if (_selectedType == 'regular') {
         _selectedMonth = _months[entry.date.month - 1];
       }
@@ -56,15 +59,20 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
   }
 
   Future<void> _fetchExistingRegularMonths() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     final now = DateTime.now();
     final startOfYear = DateTime(now.year, 1, 1);
     final endOfYear = DateTime(now.year, 12, 31, 23, 59, 59);
 
     final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
         .collection('income')
         .where('type', isEqualTo: 'regular')
-        .where('date', isGreaterThanOrEqualTo: startOfYear)
-        .where('date', isLessThanOrEqualTo: endOfYear)
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfYear))
+        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endOfYear))
         .get();
 
     setState(() {
@@ -73,59 +81,58 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
         final data = doc.data();
         if (data['date'] is Timestamp) {
           final date = (data['date'] as Timestamp).toDate();
-          _existingMonths.add(_months[date.month - 1]);
+          _existingMonths.add("${date.year}-${_months[date.month - 1]}");
         }
       }
     });
   }
 
   Future<void> _addOrUpdateIncome() async {
-    if (_formKey.currentState!.validate()) {
-      DateTime entryDate;
-      if (_selectedType == 'regular') {
-        final now = DateTime.now();
-        final monthIndex = _months.indexOf(_selectedMonth!);
-        entryDate = DateTime(now.year, monthIndex + 1, 15);
-      } else {
-        entryDate = _selectedDate;
-      }
+    if (!_formKey.currentState!.validate()) return;
 
-      final incomeData = {
-        'amount': double.tryParse(_amountController.text) ?? 0.0,
-        'date': Timestamp.fromDate(entryDate),
-        'type': _selectedType,
-        'description': _descriptionController.text.isNotEmpty
-            ? _descriptionController.text
-            : null,
-      };
+    DateTime entryDate;
+    if (_selectedType == 'regular') {
+      final monthIndex = _months.indexOf(_selectedMonth!);
+      entryDate = DateTime(DateTime.now().year, monthIndex + 1, 15);
 
-      if (widget.incomeEntryToEdit != null) {
-        await FirebaseFirestore.instance
-            .collection('income')
-            .doc(widget.incomeEntryToEdit!.id)
-            .update(incomeData);
-      } else {
-        await FirebaseFirestore.instance.collection('income').add(incomeData);
+      final key = "${entryDate.year}-${_months[entryDate.month - 1]}";
+      // This is the core check for uniqueness for regular income entries
+      if (_existingMonths.contains(key) && widget.incomeEntryToEdit == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Regular income for ${_selectedMonth!} already exists",
+            ),
+          ),
+        );
+        return; // Prevent saving if a duplicate is found
       }
-
-      if (mounted) {
-        Navigator.pop(context, true); // ✅ return true to trigger refresh
-      }
+    } else {
+      entryDate = _selectedDate;
     }
+
+    final entry = IncomeEntry(
+      id: widget.incomeEntryToEdit?.id ?? '',
+      amount: double.tryParse(_amountController.text) ?? 0.0,
+      date: entryDate,
+      type: _selectedType,
+      description: _descriptionController.text.isNotEmpty
+          ? _descriptionController.text
+          : null,
+    );
+
+    await _incomeService.addOrUpdateIncome(entry);
+    if (mounted) Navigator.pop(context, true);
   }
 
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
+    final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
     );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
+    if (picked != null) setState(() => _selectedDate = picked);
   }
 
   @override
@@ -142,7 +149,7 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
+            children: [
               TextFormField(
                 controller: _amountController,
                 decoration: const InputDecoration(
@@ -154,12 +161,10 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                   decimal: true,
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (value == null || value.isEmpty)
                     return 'Please enter an amount';
-                  }
-                  if (double.tryParse(value) == null) {
+                  if (double.tryParse(value) == null)
                     return 'Please enter a valid number';
-                  }
                   return null;
                 },
               ),
@@ -171,12 +176,10 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                       title: const Text('Regular'),
                       value: 'regular',
                       groupValue: _selectedType,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedType = value!;
-                          _selectedMonth = _months[DateTime.now().month - 1];
-                        });
-                      },
+                      onChanged: (value) => setState(() {
+                        _selectedType = value!;
+                        _selectedMonth = _months[DateTime.now().month - 1];
+                      }),
                     ),
                   ),
                   Expanded(
@@ -184,11 +187,8 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                       title: const Text('Irregular'),
                       value: 'irregular',
                       groupValue: _selectedType,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedType = value!;
-                        });
-                      },
+                      onChanged: (value) =>
+                          setState(() => _selectedType = value!),
                     ),
                   ),
                 ],
@@ -202,13 +202,15 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                     prefixIcon: Icon(Icons.calendar_today),
                     border: OutlineInputBorder(),
                   ),
-                  items: _months.map((String month) {
+                  items: _months.map((month) {
+                    final key = "${DateTime.now().year}-$month";
                     final isDisabled =
-                        _existingMonths.contains(month) &&
+                        _existingMonths.contains(key) &&
                         widget.incomeEntryToEdit == null;
                     return DropdownMenuItem<String>(
                       value: month,
-                      enabled: !isDisabled,
+                      enabled:
+                          !isDisabled, // Disable if month already has a regular income
                       child: Text(
                         month,
                         style: TextStyle(
@@ -217,19 +219,14 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                       ),
                     );
                   }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedMonth = newValue;
-                    });
-                  },
+                  onChanged: (val) => setState(() => _selectedMonth = val),
                   validator: (value) {
-                    if (value == null) {
-                      return 'Please select a month';
-                    }
-                    if (_existingMonths.contains(value) &&
-                        widget.incomeEntryToEdit == null) {
+                    if (value == null) return 'Please select a month';
+                    final key = "${DateTime.now().year}-$value";
+                    // Validator for dropdown - provides immediate feedback
+                    if (_existingMonths.contains(key) &&
+                        widget.incomeEntryToEdit == null)
                       return 'Entry for this month already exists';
-                    }
                     return null;
                   },
                 )
@@ -280,7 +277,6 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
 }
 
 extension on DateTime {
-  String toShortString() {
-    return '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
-  }
+  String toShortString() =>
+      '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
 }

@@ -89,7 +89,10 @@ class AnalyticsService {
     final irregular = incomes.where(
       (e) => e.date.year == currentYear && e.date.day != 1,
     );
-    return irregular.fold(0.0, (sum, e) => sum + e.amount);
+    return irregular.fold<double>(
+      0.0,
+      (totalAmount, e) => totalAmount + e.amount,
+    );
   }
 
   // Aggregate monthly income (assuming 1st of month is monthly)
@@ -114,7 +117,7 @@ class AnalyticsService {
 
     final total = incomes
         .where((e) => e.date.year == currentYear)
-        .fold(0.0, (sum, e) => sum + e.amount);
+        .fold(0.0, (total, e) => total + e.amount);
 
     return total;
   }

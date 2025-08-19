@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../services/analytics_service.dart';
+import '../services/analytics_service.dart'; // Add this import
 
 class IncomeChartWidget extends StatefulWidget {
   const IncomeChartWidget({super.key});

@@ -5,23 +5,26 @@ import '../models/budget_estimation.dart';
 class BudgetService {
   final _db = FirebaseFirestore.instance;
 
-  // Get budgets for a specific month
-  Stream<List<Budget>> getBudgetsForMonth(int month, int year) {
+  // Get budgets for a specific month/year. If month=null, fetch all months
+  Stream<List<Budget>> getBudgetsForMonth(int? month, int year) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return Stream.value([]);
 
-    return _db
+    var query = _db
         .collection('users')
         .doc(user.uid)
         .collection('budgets')
-        .where('month', isEqualTo: month)
-        .where('year', isEqualTo: year)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => Budget.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
+        .where('year', isEqualTo: year);
+
+    if (month != null) {
+      query = query.where('month', isEqualTo: month);
+    }
+
+    return query.snapshots().map(
+      (snapshot) => snapshot.docs
+          .map((doc) => Budget.fromMap(doc.id, doc.data()))
+          .toList(),
+    );
   }
 
   // Add or Update Budget
