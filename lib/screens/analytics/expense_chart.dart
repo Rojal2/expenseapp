@@ -4,7 +4,16 @@ import '../../services/expense_service.dart';
 import 'package:intl/intl.dart';
 
 class ExpenseChart extends StatefulWidget {
-  const ExpenseChart({super.key});
+  final DateTime startDate;
+  final DateTime endDate;
+  final String periodLabel;
+
+  const ExpenseChart({
+    super.key,
+    required this.startDate,
+    required this.endDate,
+    required this.periodLabel,
+  });
 
   @override
   State<ExpenseChart> createState() => _ExpenseChartState();
@@ -15,29 +24,19 @@ class _ExpenseChartState extends State<ExpenseChart> {
   Map<String, double> _data = {};
   bool _loading = true;
 
-  // Dropdown selections
-  int _selectedYear = DateTime.now().year;
-  int? _selectedMonth;
-  int? _selectedWeek;
-
-  String _currentPeriodLabel = '';
-
-  /// Returns a list of available years (last 5 years)
-  List<int> get yearOptions {
-    int currentYear = DateTime.now().year;
-    return List.generate(5, (i) => currentYear - i);
-  }
-
-  /// Returns list of months 1-12
-  List<int> get monthOptions => List.generate(12, (i) => i + 1);
-
-  /// Returns list of weeks 1-4
-  List<int> get weekOptions => List.generate(4, (i) => i + 1);
-
   @override
   void initState() {
     super.initState();
     fetchData();
+  }
+
+  @override
+  void didUpdateWidget(covariant ExpenseChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.startDate != oldWidget.startDate ||
+        widget.endDate != oldWidget.endDate) {
+      fetchData();
+    }
   }
 
   Future<void> fetchData() async {
@@ -45,42 +44,9 @@ class _ExpenseChartState extends State<ExpenseChart> {
       _loading = true;
     });
 
-    DateTime now = DateTime.now();
-    DateTime startDate;
-    DateTime endDate;
-
-    // Yearly view
-    if (_selectedMonth == null) {
-      startDate = DateTime(_selectedYear, 1, 1);
-      endDate = DateTime(_selectedYear, 12, 31);
-      if (endDate.isAfter(now)) endDate = now;
-      _currentPeriodLabel = '$_selectedYear';
-    }
-    // Monthly view
-    else if (_selectedWeek == null) {
-      startDate = DateTime(_selectedYear, _selectedMonth!, 1);
-      endDate = DateTime(_selectedYear, _selectedMonth! + 1, 0);
-      if (endDate.isAfter(now)) endDate = now;
-      _currentPeriodLabel =
-          '${DateFormat.MMMM().format(startDate)} $_selectedYear';
-    }
-    // Weekly view
-    else {
-      DateTime firstDayOfMonth = DateTime(_selectedYear, _selectedMonth!, 1);
-      startDate = firstDayOfMonth.add(Duration(days: (_selectedWeek! - 1) * 7));
-      endDate = startDate.add(const Duration(days: 6));
-
-      DateTime lastDayOfMonth = DateTime(_selectedYear, _selectedMonth! + 1, 0);
-      if (endDate.isAfter(lastDayOfMonth)) endDate = lastDayOfMonth;
-      if (endDate.isAfter(now)) endDate = now;
-
-      _currentPeriodLabel =
-          'Week $_selectedWeek: ${DateFormat('MMM dd').format(startDate)} – ${DateFormat('MMM dd').format(endDate)}';
-    }
-
     Map<String, double> data = await _expenseService.getExpensesByDateRange(
-      startDate: startDate,
-      endDate: endDate,
+      startDate: widget.startDate,
+      endDate: widget.endDate,
     );
 
     setState(() {
@@ -93,93 +59,11 @@ class _ExpenseChartState extends State<ExpenseChart> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Filters
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              // Year
-              _buildDropdown<int>(
-                value: _selectedYear,
-                items: yearOptions
-                    .map((y) => DropdownMenuItem(value: y, child: Text('$y')))
-                    .toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() {
-                      _selectedYear = val;
-                      _selectedMonth = null;
-                      _selectedWeek = null;
-                      fetchData();
-                    });
-                  }
-                },
-              ),
-
-              // Month
-              _buildDropdown<int?>(
-                hint: const Text('Month'),
-                value: _selectedMonth,
-                items: [
-                  const DropdownMenuItem<int?>(
-                    value: null,
-                    child: Text('All Months'),
-                  ),
-                  ...monthOptions
-                      .map(
-                        (m) => DropdownMenuItem<int?>(
-                          value: m,
-                          child: Text(DateFormat.MMMM().format(DateTime(0, m))),
-                        ),
-                      )
-                      .toList(),
-                ],
-                onChanged: (val) {
-                  setState(() {
-                    _selectedMonth = val;
-                    _selectedWeek = null;
-                    fetchData();
-                  });
-                },
-              ),
-
-              // Week
-              _buildDropdown<int?>(
-                hint: const Text('Week'),
-                value: _selectedWeek,
-                items: [
-                  const DropdownMenuItem<int?>(
-                    value: null,
-                    child: Text('All Weeks'),
-                  ),
-                  ...weekOptions
-                      .map(
-                        (w) => DropdownMenuItem<int?>(
-                          value: w, // <- Keep as integer
-                          child: Text(
-                            'Week $w',
-                          ), // <- Display "Week 1", "Week 2", etc.
-                        ),
-                      )
-                      .toList(),
-                ],
-                onChanged: (val) {
-                  setState(() {
-                    _selectedWeek = val; // Keep integer internally
-                    fetchData();
-                  });
-                },
-              ),
-            ],
-          ),
-        ),
-
-        if (_currentPeriodLabel.isNotEmpty)
+        if (widget.periodLabel.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Text(
-              _currentPeriodLabel,
+              widget.periodLabel,
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -187,7 +71,6 @@ class _ExpenseChartState extends State<ExpenseChart> {
               ),
             ),
           ),
-
         Expanded(
           child: _loading
               ? const Center(child: CircularProgressIndicator())
@@ -245,7 +128,6 @@ class _ExpenseChartState extends State<ExpenseChart> {
                           ),
                         ),
                         const SizedBox(height: 24),
-
                         // Legends
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,7 +159,6 @@ class _ExpenseChartState extends State<ExpenseChart> {
                           }).toList(),
                         ),
                         const SizedBox(height: 16),
-
                         // Total
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -314,41 +195,6 @@ class _ExpenseChartState extends State<ExpenseChart> {
                 ),
         ),
       ],
-    );
-  }
-
-  Widget _buildDropdown<T>({
-    required T value,
-    required List<DropdownMenuItem<T>> items,
-    required ValueChanged<T?> onChanged,
-    Widget? hint,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blueGrey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          items: items,
-          onChanged: onChanged,
-          hint: hint,
-          style: const TextStyle(color: Colors.blueGrey, fontSize: 16),
-          icon: const Icon(Icons.arrow_drop_down, color: Colors.blueGrey),
-          dropdownColor: Colors.white,
-        ),
-      ),
     );
   }
 
