@@ -34,59 +34,79 @@ class _ComparisonChartWidgetState extends State<ComparisonChartWidget> {
   Widget build(BuildContext context) {
     if (loading) return const Center(child: CircularProgressIndicator());
 
-    final weeks = weeklyData.keys.toList()..sort();
-    final maxY = weeklyData.values
-        .map((e) => e.values.reduce((a, b) => a > b ? a : b))
-        .reduce((a, b) => a > b ? a : b);
+    // Combine totals across all weeks
+    double totalExpense = 0, totalIncome = 0;
+    for (final week in weeklyData.values) {
+      totalExpense += week['expense'] ?? 0;
+      totalIncome +=
+          (week['coveredByIrregular'] ?? 0) + (week['coveredByMonthly'] ?? 0);
+    }
 
-    return AspectRatio(
-      aspectRatio: 1.6,
-      child: BarChart(
-        BarChartData(
-          maxY: maxY + 50,
-          barGroups: weeks
-              .map(
-                (week) => BarChartGroupData(
-                  x: week,
-                  barsSpace: 4,
-                  barRods: [
-                    BarChartRodData(
-                      toY: weeklyData[week]!['expense']!,
-                      color: Colors.red,
-                      width: 10,
-                    ),
-                    BarChartRodData(
-                      toY: weeklyData[week]!['coveredByIrregular']!,
-                      color: Colors.orange,
-                      width: 10,
-                    ),
-                    BarChartRodData(
-                      toY: weeklyData[week]!['coveredByMonthly']!,
-                      color: Colors.green,
-                      width: 10,
-                    ),
-                  ],
+    final total = totalExpense + totalIncome;
+
+    return Column(
+      children: [
+        AspectRatio(
+          aspectRatio: 1.3,
+          child: PieChart(
+            PieChartData(
+              sectionsSpace: 4,
+              centerSpaceRadius: 60,
+              startDegreeOffset: -90,
+              borderData: FlBorderData(show: false),
+              sections: [
+                PieChartSectionData(
+                  value: totalExpense,
+                  title: '${(totalExpense / total * 100).toStringAsFixed(1)}%',
+                  color: Colors.redAccent,
+                  radius: 70,
+                  borderSide: const BorderSide(color: Colors.white, width: 2),
+                  titleStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              )
-              .toList(),
-          titlesData: FlTitlesData(
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  return Text(
-                    'W${value.toInt()}',
-                    style: const TextStyle(fontSize: 10),
-                  );
-                },
-              ),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: true, reservedSize: 40),
+                PieChartSectionData(
+                  value: totalIncome,
+                  title: '${(totalIncome / total * 100).toStringAsFixed(1)}%',
+                  color: Colors.greenAccent,
+                  radius: 70,
+                  borderSide: const BorderSide(color: Colors.white, width: 2),
+                  titleStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-      ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _legendDot(Colors.redAccent, "Expenses"),
+            const SizedBox(width: 16),
+            _legendDot(Colors.greenAccent, "Income"),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _legendDot(Color color, String label) {
+    return Row(
+      children: [
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+        ),
+        const SizedBox(width: 4),
+        Text(label, style: const TextStyle(fontSize: 12)),
+      ],
     );
   }
 }

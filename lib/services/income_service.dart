@@ -71,9 +71,8 @@ class IncomeService {
         .delete();
   }
 
-  /// Group incomes by period
-  Future<Map<String, double>> getIncomeBreakdown({
-    String period = 'month',
+  /// Group incomes by category
+  Future<Map<String, double>> getIncomeBreakdownByCategory({
     DateTime? startDate,
     DateTime? endDate,
   }) async {
@@ -81,18 +80,7 @@ class IncomeService {
     final Map<String, double> grouped = {};
 
     for (var e in incomes) {
-      String key;
-      if (period == 'month') {
-        key = "${e.date.year}-${e.date.month.toString().padLeft(2, '0')}";
-      } else if (period == 'week') {
-        final week = ((e.date.day - 1) ~/ 7) + 1;
-        key =
-            "${e.date.year}-${e.date.month.toString().padLeft(2, '0')}-W$week";
-      } else if (period == 'year') {
-        key = e.date.year.toString();
-      } else {
-        key = e.date.toIso8601String();
-      }
+      final key = e.type ?? 'Uncategorized'; // category field in IncomeEntry
       grouped[key] = (grouped[key] ?? 0) + e.amount;
     }
     return grouped;

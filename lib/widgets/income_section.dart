@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'models/income_entry.dart';
+import '../models/income_entry.dart';
 
 class IncomeSection extends StatelessWidget {
   final TextEditingController incomeAmountController;
