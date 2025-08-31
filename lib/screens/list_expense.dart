@@ -12,7 +12,7 @@ class ListExpenseScreen extends StatefulWidget {
 }
 
 class _ListExpenseScreenState extends State<ListExpenseScreen> {
-  int? selectedMonth = DateTime.now().month;
+  int? selectedMonth = DateTime.now().month; // null means "All months"
   int selectedYear = DateTime.now().year;
 
   final List<String> monthNames = const [
@@ -286,30 +286,46 @@ class _ListExpenseScreenState extends State<ListExpenseScreen> {
 
   Stream<QuerySnapshot> _getExpenseStream() {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      return const Stream.empty();
-    }
+    if (user == null) return const Stream.empty();
 
     Query collectionRef = FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
         .collection('expenses');
 
+    DateTime startDate;
+    DateTime endDate;
+
     if (selectedMonth != null) {
-      final startDate = DateTime(selectedYear, selectedMonth!, 1);
-      final endDate = DateTime(selectedYear, selectedMonth! + 1, 0);
-
-      collectionRef = collectionRef
-          .where('date', isGreaterThanOrEqualTo: startDate)
-          .where('date', isLessThanOrEqualTo: endDate);
+      // Start of month
+      startDate = DateTime(selectedYear, selectedMonth!, 1);
+      // End of month
+      if (selectedMonth == 12) {
+        endDate = DateTime(
+          selectedYear + 1,
+          1,
+          1,
+        ).subtract(const Duration(milliseconds: 1));
+      } else {
+        endDate = DateTime(
+          selectedYear,
+          selectedMonth! + 1,
+          1,
+        ).subtract(const Duration(milliseconds: 1));
+      }
     } else {
-      final startDate = DateTime(selectedYear, 1, 1);
-      final endDate = DateTime(selectedYear, 12, 31);
-
-      collectionRef = collectionRef
-          .where('date', isGreaterThanOrEqualTo: startDate)
-          .where('date', isLessThanOrEqualTo: endDate);
+      // Whole year
+      startDate = DateTime(selectedYear, 1, 1);
+      endDate = DateTime(
+        selectedYear + 1,
+        1,
+        1,
+      ).subtract(const Duration(milliseconds: 1));
     }
+
+    collectionRef = collectionRef
+        .where('date', isGreaterThanOrEqualTo: startDate)
+        .where('date', isLessThanOrEqualTo: endDate);
 
     return collectionRef.orderBy('date', descending: true).snapshots();
   }

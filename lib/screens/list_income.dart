@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:expenseapp/models/income_entry.dart';
 import 'package:expenseapp/screens/add_income.dart';
 import 'package:expenseapp/services/income_service.dart';

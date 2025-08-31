@@ -29,10 +29,46 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     'Other',
   ];
 
+  final List<String> _months = [
+    'All',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+
   bool _loading = false;
   String _search = '';
   String _filterCategory = 'All';
+  String _filterMonth = 'All';
   String? _editingId;
+
+  // Helper to convert month string to number
+  int monthStringToNumber(String month) {
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return months.indexOf(month) + 1;
+  }
 
   Future<void> _addOrUpdateExpense() async {
     setState(() {
@@ -132,7 +168,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       appBar: AppBar(
         title: const Text('Expenses'),
         actions: [
-          // Only theme toggle remains
           IconButton(
             icon: Icon(
               Provider.of<ThemeProvider>(context).themeMode == ThemeMode.dark
@@ -267,6 +302,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     ),
                   ),
                 ),
+                // Search and filters
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
@@ -295,6 +331,20 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             .toList(),
                         onChanged: (val) =>
                             setState(() => _filterCategory = val!),
+                        underline: Container(),
+                      ),
+                      const SizedBox(width: 8),
+                      DropdownButton<String>(
+                        value: _filterMonth,
+                        items: _months
+                            .map(
+                              (month) => DropdownMenuItem(
+                                value: month,
+                                child: Text(month),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (val) => setState(() => _filterMonth = val!),
                         underline: Container(),
                       ),
                     ],
@@ -354,6 +404,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       if (_filterCategory != 'All') {
                         expenses = expenses
                             .where((e) => e.category == _filterCategory)
+                            .toList();
+                      }
+
+                      // Filter by month
+                      if (_filterMonth != 'All') {
+                        final monthNum = monthStringToNumber(_filterMonth);
+                        expenses = expenses
+                            .where((e) => e.date.month == monthNum)
                             .toList();
                       }
 
