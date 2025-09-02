@@ -31,18 +31,34 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
   ];
 
   Stream<List<IncomeEntry>> _incomeStream() async* {
-    final startDate = selectedMonth != null
-        ? DateTime(selectedYear, selectedMonth!, 1)
-        : DateTime(selectedYear, 1, 1);
-    final endDate = selectedMonth != null
-        ? DateTime(selectedYear, selectedMonth! + 1, 0)
-        : DateTime(selectedYear, 12, 31);
+    DateTime startDate;
+    DateTime endDate;
 
+    if (selectedMonth != null) {
+      // Specific month selected
+      startDate = DateTime(selectedYear, selectedMonth!, 1);
+      endDate = DateTime(selectedYear, selectedMonth! + 1, 0);
+    } else {
+      // "All" selected
+      startDate = DateTime(selectedYear, 1, 1);
+      endDate = DateTime(selectedYear, 12, 31);
+    }
+
+    // Fetch incomes in the date range
     final incomes = await _incomeService.getIncomes(
       startDate: startDate,
       endDate: endDate,
     );
-    yield incomes;
+
+    // Keep only entries matching the selected month/year (if month is chosen)
+    final filtered = incomes.where((entry) {
+      if (selectedMonth == null)
+        return entry.date.year == selectedYear; // All months
+      return entry.date.year == selectedYear &&
+          entry.date.month == selectedMonth;
+    }).toList();
+
+    yield filtered;
   }
 
   Future<void> _editIncomeEntry(IncomeEntry entry) async {
@@ -118,7 +134,6 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
                         items:
                             [
                               const DropdownMenuItem<int?>(
-                                // Explicitly typing the DropdownMenuItem
                                 value: null,
                                 child: Text('All'),
                               ),
@@ -126,10 +141,7 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
                             List.generate(
                               12,
                               (i) => DropdownMenuItem<int?>(
-                                // Explicitly typing the DropdownMenuItem
-                                value:
-                                    i +
-                                    1, // i + 1 is an int, which is assignable to int?
+                                value: i + 1,
                                 child: Text(monthNames[i]),
                               ),
                             ),
@@ -144,15 +156,15 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
                           border: InputBorder.none,
                         ),
                         value: selectedYear,
-                        items: List.generate(5, (i) => DateTime.now().year - 4 + i)
-                            .map(
-                              (yr) => DropdownMenuItem<int>(
-                                // Explicitly typing the DropdownMenuItem for years
-                                value: yr,
-                                child: Text('$yr'),
-                              ),
-                            )
-                            .toList(),
+                        items:
+                            List.generate(5, (i) => DateTime.now().year - 4 + i)
+                                .map(
+                                  (yr) => DropdownMenuItem<int>(
+                                    value: yr,
+                                    child: Text('$yr'),
+                                  ),
+                                )
+                                .toList(),
                         onChanged: (val) {
                           if (val != null) setState(() => selectedYear = val);
                         },
@@ -167,16 +179,18 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
               child: StreamBuilder<List<IncomeEntry>>(
                 stream: _incomeStream(),
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData)
+                  if (!snapshot.hasData) {
                     return const Center(child: CircularProgressIndicator());
+                  }
                   final incomes = snapshot.data!;
-                  if (incomes.isEmpty)
+                  if (incomes.isEmpty) {
                     return const Center(
                       child: Text(
                         'No income records found',
                         style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                     );
+                  }
 
                   final totalIncome = incomes.fold<double>(
                     0,
@@ -204,7 +218,7 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
                           itemBuilder: (context, index) {
                             final entry = incomes[index];
                             final isRegular =
-                                entry.type?.toLowerCase() == 'regular';
+                                entry.type.toLowerCase() == 'regular';
 
                             return Card(
                               elevation: 2,

@@ -242,8 +242,7 @@ class AnalyticsScreen extends StatelessWidget {
                       titlesData: FlTitlesData(
                         leftTitles: AxisTitles(
                           sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 32,
+                            showTitles: false, // Y-axis removed
                           ),
                         ),
                         bottomTitles: AxisTitles(
@@ -303,8 +302,7 @@ class AnalyticsScreen extends StatelessWidget {
                       titlesData: FlTitlesData(
                         leftTitles: AxisTitles(
                           sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 32,
+                            showTitles: false, // Y-axis removed
                           ),
                         ),
                         bottomTitles: AxisTitles(

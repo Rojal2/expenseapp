@@ -16,21 +16,16 @@ class AnalyticsDashboard extends StatefulWidget {
 class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
   AnalyticsMode _mode = AnalyticsMode.expense;
 
-  // Dropdown selections - now managed by the parent Dashboard
   int _selectedYear = DateTime.now().year;
   int? _selectedMonth;
   int? _selectedWeek;
 
-  /// Returns a list of available years (last 5 years)
   List<int> get yearOptions {
     int currentYear = DateTime.now().year;
     return List.generate(5, (i) => currentYear - i);
   }
 
-  /// Returns list of months 1-12
   List<int> get monthOptions => List.generate(12, (i) => i + 1);
-
-  /// Returns list of weeks 1-4
   List<int> get weekOptions => List.generate(4, (i) => i + 1);
 
   Widget _buildDropdown<T>({
@@ -71,29 +66,23 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
     );
   }
 
-  /// Calculates the start and end dates and the label based on the current selections.
   Map<String, dynamic> _getPeriodData() {
     DateTime now = DateTime.now();
     DateTime startDate;
     DateTime endDate;
     String periodLabel;
 
-    // Yearly view
     if (_selectedMonth == null) {
       startDate = DateTime(_selectedYear, 1, 1);
       endDate = DateTime(_selectedYear, 12, 31);
       if (endDate.isAfter(now)) endDate = now;
       periodLabel = '$_selectedYear';
-    }
-    // Monthly view
-    else if (_selectedWeek == null) {
+    } else if (_selectedWeek == null) {
       startDate = DateTime(_selectedYear, _selectedMonth!, 1);
       endDate = DateTime(_selectedYear, _selectedMonth! + 1, 0);
       if (endDate.isAfter(now)) endDate = now;
       periodLabel = '${DateFormat.MMMM().format(startDate)} $_selectedYear';
-    }
-    // Weekly view
-    else {
+    } else {
       DateTime firstDayOfMonth = DateTime(_selectedYear, _selectedMonth!, 1);
       startDate = firstDayOfMonth.add(Duration(days: (_selectedWeek! - 1) * 7));
       endDate = startDate.add(const Duration(days: 6));
@@ -115,7 +104,6 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    // Get the current period data
     final periodData = _getPeriodData();
     final startDate = periodData['startDate'];
     final endDate = periodData['endDate'];
@@ -152,7 +140,7 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Mode Dropdown
+          // Mode Selector
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Align(
@@ -178,33 +166,15 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
                     items: const [
                       DropdownMenuItem(
                         value: AnalyticsMode.expense,
-                        child: Text(
-                          'Expenses',
-                          style: TextStyle(
-                            color: Colors.blueGrey,
-                            fontSize: 16,
-                          ),
-                        ),
+                        child: Text('Expenses'),
                       ),
                       DropdownMenuItem(
                         value: AnalyticsMode.income,
-                        child: Text(
-                          'Income',
-                          style: TextStyle(
-                            color: Colors.blueGrey,
-                            fontSize: 16,
-                          ),
-                        ),
+                        child: Text('Income'),
                       ),
                       DropdownMenuItem(
                         value: AnalyticsMode.comparison,
-                        child: Text(
-                          'Expense vs Income',
-                          style: TextStyle(
-                            color: Colors.blueGrey,
-                            fontSize: 16,
-                          ),
-                        ),
+                        child: Text('Expense vs Income'),
                       ),
                     ],
                     onChanged: (val) {
@@ -218,17 +188,16 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
                       Icons.arrow_drop_down,
                       color: Colors.blueGrey,
                     ),
-                    dropdownColor: Colors.white,
                   ),
                 ),
               ),
             ),
           ),
-          // Period Filters - Year, Month, Week
+
+          // Period Filters (Year / Month / Week)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildDropdown<int>(
                   value: _selectedYear,
@@ -254,16 +223,12 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
                       value: null,
                       child: Text('All Months'),
                     ),
-                    ...monthOptions
-                        .map(
-                          (m) => DropdownMenuItem<int?>(
-                            value: m,
-                            child: Text(
-                              DateFormat.MMMM().format(DateTime(0, m)),
-                            ),
-                          ),
-                        )
-                        .toList(),
+                    ...monthOptions.map(
+                      (m) => DropdownMenuItem<int?>(
+                        value: m,
+                        child: Text(DateFormat.MMMM().format(DateTime(0, m))),
+                      ),
+                    ),
                   ],
                   onChanged: (val) {
                     setState(() {
@@ -281,30 +246,30 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
                       value: null,
                       child: Text('All Weeks'),
                     ),
-                    ...weekOptions
-                        .map(
-                          (w) => DropdownMenuItem<int?>(
-                            value: w,
-                            child: Text('Week $w'),
-                          ),
-                        )
-                        .toList(),
+                    ...weekOptions.map(
+                      (w) => DropdownMenuItem<int?>(
+                        value: w,
+                        child: Text('Week $w'),
+                      ),
+                    ),
                   ],
                   onChanged: (val) {
-                    setState(() {
-                      _selectedWeek = val;
-                    });
+                    setState(() => _selectedWeek = val);
                   },
                 ),
               ],
             ),
           ),
-          // The title of the chart
 
-          // Spacing between the title and the chart
           const SizedBox(height: 8),
-          // The chart widget
-          Expanded(child: chartWidget),
+
+          // Chart fills the rest of screen
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: chartWidget,
+            ),
+          ),
         ],
       ),
     );
