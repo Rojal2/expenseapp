@@ -166,7 +166,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Expenses'),
+        title: const Text('Rupak'),
         actions: [
           IconButton(
             icon: Icon(

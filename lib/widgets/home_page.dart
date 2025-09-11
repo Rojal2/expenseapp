@@ -24,8 +24,8 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "Budget Tracker",
-          style: TextStyle(fontWeight: FontWeight.bold),
+          "Expenses Tracker and Budget Planner",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
@@ -42,10 +42,10 @@ class HomePage extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Text(
-                      "Budget Tracker",
+                      "Expenses Tracker and Budget Plannerr",
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 24,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -140,7 +140,7 @@ class HomePage extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 24.0),
               child: Text(
-                "Budget Tracker helps you manage your income, track expenses, "
+                "Expenses Tracker and Budget Tracker helps you manage your income, track expenses, "
                 "and set financial goals for each month. Stay on top of your finances "
                 "and achieve your savings targets effortlessly.",
                 textAlign: TextAlign.center,
